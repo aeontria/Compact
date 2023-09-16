@@ -1,24 +1,24 @@
 import { useCallback, useEffect, useState } from "react"
 import Image from 'next/image'
-import { MdArrowBack, MdClose, MdMenu, MdSearch, MdViewCompact } from "react-icons/md"
+import { MdArrowBack, MdClose, MdMenu, MdSearch, MdSettings, MdViewCompact } from "react-icons/md"
 import Compact from "@/utils/compact"
 import router from "next/router"
 import Link from "next/link"
 import axios from "axios"
 import * as Icons from "react-icons/ri"
 import TextSubtitle from "../TextSubtitle"
+import { BsCheckCircleFill, BsFillExclamationCircleFill } from "react-icons/bs"
 
 const Navigation = (props:any) => {
     const mobile = Compact()
     const [token, setToken] = useState<string | null>(null)
-    const endpointArena = process.env.NEXT_PUBLIC_EP_ARENA
     const endpoint = process.env.NEXT_PUBLIC_EP
 
     const [openMenu, setOpenMenu] = useState(true)
     const [openArena, setOpenArena] = useState(false)
     const [openProfile, setOpenProfile] = useState(false)
 
-    // const [userData, setUserData] = useState(JSON.parse(localStorage.getItem('cgrDataDetail')!))
+    const [userData, setUserData] = useState(JSON.parse(localStorage.getItem('cgrDataDetail')!))
     const [menuCategory, setMenuCategory] = useState<any[]>([])
     const [menuCategoryActive, setMenuCategoryActive] = useState<any[]>([])
     const [menus, setMenus] = useState<any[]>([])
@@ -26,30 +26,34 @@ const Navigation = (props:any) => {
 
     const [search, setSearch] =useState('')
 
-    // const storedToken = localStorage.getItem('cgrToken')
+    const [dailyQuota, setDailyQuota] = useState(0)
+    const storedToken = localStorage.getItem('cgrToken')
 
     type IconNames = keyof typeof Icons; 
 
-    // const fetchAllMenu = useCallback(async () => {
-    //     try {
-    //       const config = {
-    //         headers: {
-    //           Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
-    //         },
-    //       };
-    //       const response = await axios.post(endpointArena + 'menus/get-all', {}, config);
-    //       setMenuCategory(response.data.data);
+    // NOTIF
+    const [showNotification, setShowNotification] = useState(false)
+    const [statNotif, setStatNotif] = useState(true)
+    const [msgNotif, setMsgNotif] = useState('')
 
-    //       const responseActive = await axios.post(endpointArena + 'menus/get-active', {}, config);
-    //       setMenuCategoryActive(responseActive.data.data);
+    const fetchData = useCallback(async () => {
+        try {
+          const config = {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
+            },
+          };
+          const response = await axios.post(endpoint + 'redemption/get-config', {}, config);
+          setDailyQuota(response.data.data);
 
-    //       const responseMenu = await axios.post(endpoint + 'menus/get-all');
-    //       setMenus(responseMenu.data.data);
+        } catch (error) {
+          // Handle error here
+        }
+      }, []);
 
-    //     } catch (error) {
-    //       // Handle error here
-    //     }
-    //   }, []);
+        useEffect(() => {
+            fetchData()
+      }, [router,fetchData])
 
     // useEffect(() => {
     //     if (!storedToken) {
@@ -102,8 +106,49 @@ const Navigation = (props:any) => {
     //     fetchData()
     // }, [search])
     
+    function handleSaveQuota() {
+        const x = {
+            p_new_quota:dailyQuota
+        }
+        const config = {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
+            },
+        };
+
+        axios.post(`${endpoint}redemption/update-config`,x, config)
+            .then(response => {
+                setStatNotif(true)
+                setMsgNotif('Quota has been updated')
+                setShowNotification(true)
+                setOpenArena(false)
+                setTimeout(() => {
+                    setShowNotification(false)
+                  }, 2000)
+                
+            })
+            .catch(error => {
+        })
+    }
+
     return (
         <div className='flex flex-row w-screen h-screen'>
+            {
+          showNotification &&
+              <div className={`absolute max-w-[80%] top-5 right-5 z-10`}>
+                {
+                  statNotif ?
+                    <div className='flex flex-row h-20 bg-success justify-center items-center gap-1 p-3 shadow-md radius-xs rounded-lg'>
+                        <span className='text-white'><BsCheckCircleFill/></span>
+                        <span className={`${mobile && 'text-xs'} text-white`}>{msgNotif}</span>
+                    </div>:
+                        <div className='flex flex-row h-20 border-white border-2 bg-error justify-center items-center gap-1 p-3 shadow-md radius-xs rounded-lg'>
+                        <span className='text-white'><BsFillExclamationCircleFill/></span>
+                        <span className={`${mobile && 'text-xs'} text-white`}>{msgNotif}</span>
+                    </div>
+                }
+              </div>
+        }
             <div id="sidebar" className={`hidden flex-col h-screen overflow-x-hidden overflow-y-hidden ${openMenu ? (mobile ? 'w-[300px]':'w-[320px]') : 'w-0'} duration-700 bg-primary ${mobile ? 'absolute z-10' : 'relative'}`}>
                 <div className={`flex mt-4 mb-5 mx-5 items-center ${mobile ? ' justify-between' : 'justify-center'}`}>
                     <Link href={'/dashboard'}>
@@ -175,15 +220,15 @@ const Navigation = (props:any) => {
 
                     <div className={`flex flex-row gap-1 ${openMenu && mobile && 'opacity-5'}`}>
                      
-                        {/* <MdViewCompact onClick={()=>{setOpenArena(!openArena);setOpenProfile(false)}}  className={` btn btn-sm btn-circle btn-primary p-1 cursor-pointer`}/> */}
-                        {/* <div onClick={()=>{setOpenProfile(!openProfile);setOpenArena(false)}}  className={`${openMenu && mobile && ''} duration-1000 flex max-w-sm px-4 py-2 text-xs gap-1 bg-primary rounded-2xl justify-center cursor-pointer hover:bg-primary-focus`}>
+                        <MdSettings onClick={()=>{setOpenArena(!openArena);setOpenProfile(false)}}  className={` btn btn-sm btn-circle btn-primary p-1 cursor-pointer`}/>
+                        <div onClick={()=>{setOpenProfile(!openProfile);setOpenArena(false)}}  className={`${openMenu && mobile && ''} duration-1000 flex max-w-sm px-4 py-2 text-xs gap-1 bg-primary rounded-2xl justify-center cursor-pointer hover:bg-primary-focus`}>
                             <div className='text-white opacity-50'>
                                 Login as
                             </div>
                             <div className='text-white font-bold'>
                                 {userData[0].name}
                             </div>
-                        </div> */}
+                        </div>
                     </div>
                 </div>
 {/* 
@@ -198,20 +243,30 @@ const Navigation = (props:any) => {
 
             </div>
 
-            {/* <div className={`${!openArena && 'hidden'} ${mobile ? 'w-full mt-16 px-3' : 'right-3 mt-[55px]'} flex justify-center absolute`}>
-                <div className={`w-[300px] ${openMenu && mobile && 'opacity-0'} duration-1000 bg-gray-200 shadow-md shadow-gray-300 rounded-[40px] p-2`}>
-                    <div className={` max-h-[500px] w-full bg-gray-100 rounded-[33px] overflow-y-auto p-2 flex-wrap flex flex-row`}>
-                            {
+            <div className={`${!openArena && 'hidden'} ${mobile ? 'w-full mt-16 px-3' : 'right-3 mt-[70px]'} flex justify-center absolute`}>
+                {/* <div className={`w-[300px] ${openMenu && mobile && 'opacity-0'} duration-1000 bg-gray-200 shadow-md shadow-gray-300 rounded-[40px] p-2`}> */}
+                    {/* <div className={` max-h-[500px] w-full bg-gray-100 rounded-[33px] overflow-y-auto p-2 flex-wrap flex flex-col`}> */}
+                    <div className={` max-h-[500px] w-full bg-gray-100 rounded-md overflow-y-auto p-2 flex-wrap flex flex-col`}>
+                            {/* <div className=" text-xs">Total Quota</div>
+                            <div className={`flex justify-center text-sm w-full py-2 px-3 text-gray-700 leading-tight font-bold`}>4000</div>
+                            <div className=" text-xs">Total Quota Remaining</div>
+                            <div className={`flex justify-center text-sm w-full py-2 px-3 text-gray-700 leading-tight font-bold`}>3500</div> */}
+                            <div className=" text-xs">Maximum Daily Quota</div>
+                            <div className="flex flex-row gap-2 items-center">
+                            <input type="number" min={0} value={dailyQuota} name="dailyQuota" id="dailyQuota" placeholder="Daily Quota" className="input input-sm input-bordered w-full mb-3 text-xs" onChange={(dailyQuota) => setDailyQuota(parseInt(dailyQuota.target.value))} />
+                                <div className="flex rounded-md bg-secondary p-2 text-xs text-white cursor-pointer" onClick={()=>{handleSaveQuota()}}>Save</div>
+                            </div>
+                            {/* {
                                 menuCategoryActive.map((item:any,index:number)=>(
                                     <Link href={item.isactive ? (item.sso ? (item.url + 'sso?token=' + localStorage.getItem('_XPlow') + 'x5*y84fw3421ss35-f43t=' + item.sso) :  item.url) : '#' } target={`${item.isactive ? '_blank' : ''}`} key={index} className={`flex flex-col w-1/2 px-3 justify-center items-center gap-1 cursor-pointer hover:animate-pulse`}>
                                         <div className=" text-5xl text-primary"><DynamicIcon icon={item.icon}/></div>
                                         <h1 className="flex text-secondary text-xs whitespace-nowrap truncate ">{item.menu}</h1>
                                     </Link>
                                 ))
-                            }
+                            } */}
                     </div>
-                </div>
-            </div> */}
+                {/* </div> */}
+            </div>
 
             <div className={`${!openProfile && 'hidden'} right-3 mt-[55px] flex justify-center absolute cursor-pointer`}>
                 <Link href={'/logout'} className={`flex flex-row duration-1000 h-10 w-[250px] items-center justify-center gap-1 bg-white border-2 border-primary shadow-md shadow-gray-300 rounded-3xl p-2`}>

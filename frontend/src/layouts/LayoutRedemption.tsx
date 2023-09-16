@@ -31,13 +31,13 @@ const LayoutRedemption = (props: any) => {
 
     const getRemaining = useCallback(async () => {
         try {
-          // const config = {
-          //   headers: {
-          //     Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
-          //   },
-          // };
+          const config = {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
+            },
+          };
           
-          const response = await axios.post(endpoint + 'redemption/get-remaining', {}, {});
+          const response = await axios.post(endpoint + 'redemption/get-remaining', {}, config);
           setGiftRemaining(response.data.data);
         } catch (error) {
           // Handle error here
@@ -51,17 +51,17 @@ const LayoutRedemption = (props: any) => {
     const handleSubmitData = useCallback(async (event:any) => {
         event.preventDefault()
         try {
-            // const config = {
-            //     headers: {
-            //         Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
-            //     },
-            // };
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('cgrToken')}`,
+                },
+            };
 
             const x = {
                 in_qr:qrCode.substring(0,10)
             };
             // console.log(x)
-            await axios.post(endpoint + 'redemption/submit', x, {})
+            await axios.post(endpoint + 'redemption/submit', x, config)
             .then(response => {
                 // console.log(response.data)
                 setStatNotif(response.data.status)

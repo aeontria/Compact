@@ -1,6 +1,6 @@
 var express = require('express')
 const Pool = require('pg').Pool
-const { tokenvalidation } = require('../libs/tokenvalidation')
+// const { tokenvalidation } = require('../libs/tokenvalidation')
 require('dotenv').config()
 
 const pool = new Pool({
@@ -50,6 +50,49 @@ router.post("/get-remaining", function (req, res, next) {
       res.send(valued)
   })
 })
+
+
+router.post("/get-config", function (req, res, next) {
+  pool.query('SELECT * FROM fn_cgr_show_daily_quota()', (err, results) => {
+      if (err) {
+        throw err
+      }
+      var output = {
+          "status" : true,
+          "message": "Get data successfull",
+          "data": results.rows[0].tdqu_daily_quota
+      }
+
+      res.contentType('application/json').status(200)
+      var valued = JSON.stringify(output)
+      res.send(valued)
+  })
+})
+
+router.post("/update-config", async function (req, res, next) {
+  const p_new_quota = req.body.p_new_quota
+  pool.query('CALL sp_cgr_update_daily_quota($1)',[p_new_quota], (err, results) => {
+    if (err) {
+      var output = {
+        "status" : false,
+        "message": "Update failed"
+      }
+  
+      res.contentType('application/json').status(200)
+      var valued = JSON.stringify(output)
+      res.send(valued)
+    }
+
+    var output = {
+      "status" : true,
+      "message": "Update success"
+    }
+
+    res.contentType('application/json').status(200)
+    var valued = JSON.stringify(output)
+    res.send(valued)
+  });
+});
 
 router.post("/submit", async function (req, res, next) {
   const in_qr = req.body.in_qr
